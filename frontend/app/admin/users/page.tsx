@@ -1,0 +1,1 @@
+import { Suspense } from "react";import { LoadingState } from "@/components/ui";import { AdminListPage } from "@/features/access-management/components/admin-list-page";export default function Page(){return <Suspense fallback={<LoadingState/>}><AdminListPage kind="users"/></Suspense>}

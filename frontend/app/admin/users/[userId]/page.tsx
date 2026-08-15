@@ -1,0 +1,1 @@
+import { Suspense } from "react";import { LoadingState } from "@/components/ui";import { AdminDetailPage } from "@/features/access-management/components/admin-detail-page";export default async function Page(props:{params:Promise<{userId:string}>}){const{userId}=await props.params;return <Suspense fallback={<LoadingState/>}><AdminDetailPage kind="users" id={userId}/></Suspense>}

@@ -1,0 +1,2 @@
+import type { Metadata } from "next";import { Suspense } from "react";import { AppShell } from "@/components/layout/app-shell";import { LoadingState } from "@/components/ui";import { ProjectFormPage } from "@/features/projects/components/project-form-page";
+export const metadata:Metadata={title:"Buat Project | ESA Finance"};export default function NewProjectPage(){return <AppShell><Suspense fallback={<LoadingState/>}><ProjectFormPage mode="create"/></Suspense></AppShell>;}

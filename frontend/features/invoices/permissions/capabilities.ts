@@ -1,0 +1,3 @@
+import type { InvoiceAccess } from "../domain/types";
+export const invoicePermission = (action: "view" | "create" | "edit") => `invoice.${action}`;
+export function resolveInvoiceCapabilities(access:string){const value:InvoiceAccess|"pic"=access==="manage"||access==="review"||access==="view"||access==="pic"?access:"none";return{access:value,view:value!=="none",create:value==="manage",edit:value==="manage"||value==="pic",preview:value!=="none",requestConfirmation:value==="manage"||value==="pic",recordRevisionRequest:value==="pic",resubmit:value==="manage"||value==="pic",recordConfirmed:value==="pic"};}

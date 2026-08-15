@@ -1,0 +1,25 @@
+"use client";
+import { useEffect, useRef } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { normalizeOrRethrowAppError } from "@/features/foundation/domain/errors";
+import { queryKeys } from "@/lib/query-keys";
+import { normalizeAttendanceListQuery } from "../domain/logic";
+import type { AttendanceRepository, AttendanceCommand, AttendanceFileMetadata, AttendanceIssueQuery, AttendanceListQuery, AttendanceMutationResult, AttendancePreviewCommand, AttendanceSessionFile, CreateAndImportAttendanceCommand } from "../domain/types";
+import { attendanceRepositories } from "../repositories";
+const repository = attendanceRepositories.attendance;
+const safe = async <T,>(operation: () => Promise<T>) => { try { return await operation(); } catch (error) { throw normalizeOrRethrowAppError(error); } };
+export const useAttendanceList = (input: AttendanceListQuery, enabled = true) => { const query = normalizeAttendanceListQuery(input); return useQuery({ queryKey: queryKeys.attendance.list(query), enabled, queryFn: ({ signal }) => safe(() => repository.list(query, signal)) }); };
+export const useAttendanceDetail = (id: string, enabled = true) => useQuery({ queryKey: queryKeys.attendance.detail(id), enabled, queryFn: ({ signal }) => safe(() => repository.get(id, signal)) });
+export const useAttendanceTemplate = (enabled = true) => useQuery({ queryKey: queryKeys.attendance.template, enabled, queryFn: ({ signal }) => safe(() => repository.template(signal)) });
+export const useAttendanceActivity = (id: string, enabled = true) => useQuery({ queryKey: queryKeys.attendance.activity(id), enabled, queryFn: ({ signal }) => safe(() => repository.activity(id, signal)) });
+export const useAttendanceIssues = (id: string, input: AttendanceIssueQuery, enabled = true) => useQuery({ queryKey: queryKeys.attendance.issues(id, input), enabled, queryFn: ({ signal }) => safe(() => repository.issues(id, input, signal)) });
+function useAttendanceMutation<T, TResult = AttendanceMutationResult>(operation: (command: T, signal: AbortSignal) => Promise<TResult>, getId: (command: T, result: TResult) => string, invalidate = true) { const client = useQueryClient(), controller = useRef<AbortController | null>(null), mounted = useRef(true); useEffect(() => { mounted.current = true; return () => { mounted.current = false; controller.current?.abort(); }; }, []); const mutation = useMutation<TResult, Error, T>({ mutationFn: (command: T) => { controller.current?.abort(); const current = new AbortController(); controller.current = current; return safe(() => operation(command, current.signal)).finally(() => { if (controller.current === current) controller.current = null; }); }, onSuccess: (result, command) => { if (!mounted.current || !invalidate) return; const id = getId(command, result); for (const key of [queryKeys.attendance.lists, queryKeys.attendance.detail(id), queryKeys.attendance.mapping(id), queryKeys.attendance.summary(id), ["attendance", "detail", id, "issues"], queryKeys.attendance.duplicates(id), queryKeys.attendance.revisions(id), queryKeys.attendance.readiness(id), queryKeys.attendance.activity(id)]) void client.invalidateQueries({ queryKey: key }); } }); return { ...mutation, cancel: () => controller.current?.abort() }; }
+export const useCreateAttendance = () => useAttendanceMutation((command: { data: { projectId: string; period: string }; actor: { userId: string; permissionKeys: readonly string[] } }, signal) => repository.createDraft(command, signal), (_command, result) => result.batchId);
+export const usePreviewAttendance = () => useAttendanceMutation<AttendancePreviewCommand, Awaited<ReturnType<AttendanceRepository["preview"]>>>((command, signal) => repository.preview(command, signal), () => "preview", false);
+export const useCreateAndImportAttendance = () => useAttendanceMutation<CreateAndImportAttendanceCommand>((command, signal) => repository.createAndImport(command, signal), (_command, result) => result.batchId);
+export type ImportCommand = AttendanceCommand<{ batchId: string; file: AttendanceFileMetadata; scenario: AttendanceSessionFile["scenario"]; previewFingerprint?: string }>;
+export const useImportAttendance = () => useAttendanceMutation<ImportCommand>((command, signal) => repository.importFile(command, signal), command => command.data.batchId);
+export const useValidateAttendance = () => useAttendanceMutation<AttendanceCommand<{ batchId: string; commitDecision: "CommitAll" }>>((command, signal) => repository.validate(command, signal), command => command.data.batchId);
+export const useRejectAttendance = () => useAttendanceMutation<AttendanceCommand<{ batchId: string }>>((command, signal) => repository.reject(command, signal), command => command.data.batchId);
+export const useCorrectAttendance = () => useAttendanceMutation<ImportCommand>((command, signal) => repository.correct(command, signal), command => command.data.batchId);
+export const useLockAttendance = () => useAttendanceMutation<AttendanceCommand<{ batchId: string }>>((command, signal) => repository.lock(command, signal), command => command.data.batchId);

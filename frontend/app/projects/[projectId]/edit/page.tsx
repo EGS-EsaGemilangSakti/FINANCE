@@ -1,0 +1,8 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
+import { AppShell } from "@/components/layout/app-shell";
+import { DataState,LoadingState } from "@/components/ui";
+import { ProjectFormPage } from "@/features/projects/components/project-form-page";
+export const metadata:Metadata={title:"Edit Project | ESA Finance"};
+export default async function EditProjectPage(props:PageProps<"/projects/[projectId]/edit">){const [{projectId},searchParams]=await Promise.all([props.params,props.searchParams]);const access=searchParams.access==="view"||searchParams.access==="none"?searchParams.access:"manage";if(access!=="manage")return <AppShell><DataState kind="denied" title="Tidak dapat mengelola project" description="Persona demo ini tidak memiliki project.manage." action={<Link className="button button-secondary" href={`/projects?access=${access}`}>Kembali ke daftar</Link>}/></AppShell>;if(searchParams.scenario==="conflict")return <AppShell><DataState kind="conflict" title="Versi project sudah berubah" description="Versi form Anda: 2. Versi terbaru: 3. Perbedaan field: PIC (Raka → Sinta) dan tanggal akhir kontrak (31 Des 2026 → 31 Jan 2027). Input lokal tidak disimpan dan force overwrite tidak tersedia." correlationId="demo-project-conflict" action={<div className="page-actions"><Link className="button button-secondary" href={`/projects/${projectId}/edit?access=${access}`}>Muat versi terbaru</Link><Link className="button button-quiet" href={`/projects/${projectId}?access=${access}`}>Kembali tanpa menyimpan</Link></div>}/></AppShell>;return <AppShell><Suspense fallback={<LoadingState/>}><ProjectFormPage mode="edit" projectId={projectId}/></Suspense></AppShell>;}

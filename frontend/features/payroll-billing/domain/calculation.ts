@@ -1,0 +1,7 @@
+import Decimal from "decimal.js";
+import type { PayrollBillingLine, PayrollBillingSummary } from "./types";
+export const money = (value:Decimal.Value)=>new Decimal(value);
+export function calculateLine(quantity:Decimal.Value,unitRate:Decimal.Value,adjustment:Decimal.Value="0",withholding:Decimal.Value="0"){const subtotal=money(quantity).mul(unitRate);return{componentSubtotal:subtotal.toFixed(2),finalAmount:subtotal.plus(adjustment).minus(withholding).toFixed(2)};}
+export function reconcile(lines:readonly Pick<PayrollBillingLine,"finalAmount">[],summary:Pick<PayrollBillingSummary,"grandTotal">){const lineTotal=lines.reduce((total,line)=>total.plus(line.finalAmount),money(0));const variance=lineTotal.minus(summary.grandTotal);return{lineTotal:lineTotal.toFixed(2),summaryTotal:money(summary.grandTotal).toFixed(2),variance:variance.toFixed(2),reconciled:variance.isZero()};}
+export function decimalDelta(before:Decimal.Value,after:Decimal.Value){const delta=money(after).minus(before);return{delta:delta.toFixed(2),percentage:money(before).isZero()?null:delta.div(before).mul(100).toFixed(2)};}
+export const legalTransition=(from:string,to:string)=>({Draft:["Needs Review"],Calculated:["Calculated","Needs Review"],"Needs Review":["Calculated","Needs Review","Reviewed","Rejected"],Reviewed:["Locked","Rejected"],Locked:[],Rejected:["Calculated"]} as Record<string,readonly string[]>)[from]?.includes(to)??false;

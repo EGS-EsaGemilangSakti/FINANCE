@@ -1,0 +1,1 @@
+import { RateFormPage } from "@/features/rates/components/rate-form-page";export default async function Page({params}:{params:Promise<{projectId:string;rateVersionId:string}>}){const {projectId,rateVersionId}=await params;return <RateFormPage projectId={projectId} rateVersionId={rateVersionId}/>;}

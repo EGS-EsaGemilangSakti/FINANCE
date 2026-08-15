@@ -1,0 +1,1 @@
+import { Suspense } from "react";import { LoadingState } from "@/components/ui";import { MasterFormPage } from "@/features/master-data/components/master-form-page";export default function Page(){return <Suspense fallback={<LoadingState/>}><MasterFormPage kind="services"/></Suspense>}

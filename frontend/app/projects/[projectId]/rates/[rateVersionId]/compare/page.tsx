@@ -1,0 +1,1 @@
+import { RateComparePage } from "@/features/rates/components/rate-compare-page";export default async function Page({params}:{params:Promise<{projectId:string;rateVersionId:string}>}){const {projectId,rateVersionId}=await params;return <RateComparePage projectId={projectId} rateVersionId={rateVersionId}/>;}

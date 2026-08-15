@@ -1,0 +1,3 @@
+import type { MasterListQuery } from "./types";
+export interface NormalizedMasterListQuery{search:string;statuses:readonly ("Active"|"Inactive")[];sort:"code"|"name"|"status"|"updatedAt";direction:"asc"|"desc";page:number;pageSize:number;}
+export function normalizeMasterListQuery(input:MasterListQuery={}):NormalizedMasterListQuery{return{search:(input.search??"").trim().toLocaleLowerCase("id-ID"),statuses:[...new Set(input.statuses??[])].sort(),sort:input.sort??"updatedAt",direction:input.direction??"desc",page:Math.max(1,Math.trunc(input.page??1)),pageSize:Math.min(100,Math.max(1,Math.trunc(input.pageSize??20)))};}

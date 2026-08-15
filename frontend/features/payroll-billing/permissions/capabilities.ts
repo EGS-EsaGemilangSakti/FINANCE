@@ -1,0 +1,4 @@
+export type PayrollAccess="manage"|"review"|"view"|"none";
+export interface PayrollCapabilities{view:boolean;create:boolean;adjust:boolean;recalculate:boolean;review:boolean;reject:boolean;lock:boolean;}
+export function resolvePayrollCapabilities(access:string):PayrollCapabilities{if(access==="manage")return{view:true,create:true,adjust:true,recalculate:true,review:true,reject:true,lock:true};if(access==="review")return{view:true,create:false,adjust:false,recalculate:false,review:true,reject:true,lock:true};if(access==="view")return{view:true,create:false,adjust:false,recalculate:false,review:false,reject:false,lock:false};return{view:false,create:false,adjust:false,recalculate:false,review:false,reject:false,lock:false};}
+export const payrollPermission=(action:keyof Omit<PayrollCapabilities,"view">)=>`payroll-billing.${action}`;

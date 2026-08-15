@@ -1,0 +1,10 @@
+import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
+import {render,screen,waitFor} from "@testing-library/react";
+import type {ReactNode} from "react";
+import {afterEach,expect,it,vi} from "vitest";
+import {payrollBillingRepository} from "../repositories";
+import {PayrollBillingExceptions} from "./payroll-billing-exceptions";
+const replace=vi.fn();
+vi.mock("next/navigation",()=>({useRouter:()=>({replace}),usePathname:()=>"/payroll-billing/pbr-001",useSearchParams:()=>new URLSearchParams("access=review")}));
+afterEach(()=>{vi.restoreAllMocks();replace.mockReset();});
+it("aborts the production exception query on unmount and a fresh render uses a new signal",async()=>{const signals:AbortSignal[]=[];let calls=0;const repository=vi.spyOn(payrollBillingRepository,"exceptions").mockImplementation((_id,_query,signal)=>{calls++;if(signal)signals.push(signal);if(calls===1)return new Promise((_resolve,reject)=>signal?.addEventListener("abort",()=>reject(new DOMException("unmounted","AbortError")),{once:true}));return Promise.resolve({items:[{id:"fresh-exception",code:"FRESH",severity:"Warning",blocking:false,explanation:"Fresh result",affectedValue:"-",suggestedAction:"Tidak ada"}],total:1,page:1,pageSize:20,hasNextPage:false,totalPages:1});});const consoleError=vi.spyOn(console,"error").mockImplementation(()=>undefined),client=new QueryClient({defaultOptions:{queries:{retry:false}}}),Wrapper=({children}:{children:ReactNode})=><QueryClientProvider client={client}>{children}</QueryClientProvider>,first=render(<PayrollBillingExceptions runId="pbr-001" access="review"/>,{wrapper:Wrapper});await waitFor(()=>expect(signals).toHaveLength(1));expect(signals[0]?.aborted).toBe(false);first.unmount();await waitFor(()=>expect(signals[0]?.aborted).toBe(true));expect(replace).not.toHaveBeenCalled();const second=render(<PayrollBillingExceptions runId="pbr-001" access="review"/>,{wrapper:Wrapper});await screen.findByText("FRESH");expect(signals[1]).not.toBe(signals[0]);expect(signals[1]?.aborted).toBe(false);expect(repository).toHaveBeenCalledTimes(2);expect(consoleError).not.toHaveBeenCalled();second.unmount();client.clear();});

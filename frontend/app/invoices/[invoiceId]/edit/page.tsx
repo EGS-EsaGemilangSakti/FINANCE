@@ -1,0 +1,2 @@
+import {InvoiceDetailPage} from "@/features/invoices/components/invoice-detail-page";
+export default async function Page({params,searchParams}:{params:Promise<{invoiceId:string}>;searchParams:Promise<Record<string,string|string[]|undefined>>}){const [{invoiceId},query]=await Promise.all([params,searchParams]);return <InvoiceDetailPage id={invoiceId} access={typeof query.access==="string"?query.access:"manage"} edit/>;}

@@ -1,0 +1,9 @@
+import {describe,expect,it} from "vitest";
+import {AppError} from "@/features/foundation/domain/errors";
+import {mapPayrollBillingMutationError} from "./mutation-error";
+describe("payroll billing mutation error mapper",()=>{
+it.each([400,401,403,404,422] as const)("maps safe status %s",status=>{const result=mapPayrollBillingMutationError(new AppError(status,"SAFE_CODE","Pesan aman",{reason:["Wajib"],internal:["Tidak dikenal"]},false,"corr"));expect(result).toMatchObject({safeCode:"SAFE_CODE",safeMessage:"Pesan aman",correlationId:"corr",fieldErrors:{reason:["Wajib"]},cancelled:false});expect(result.globalErrors).toContain("Tidak dikenal");});
+it("maps structured aggregate and revision conflict",()=>{const result=mapPayrollBillingMutationError(new AppError(409,"STALE","Data berubah",{},false,"corr",{attemptedVersion:1,latestVersion:2,attemptedRevisionId:"r1",latestRevisionId:"r2",attemptedRevisionVersion:1,latestRevisionVersion:2,attemptedStatus:"Reviewed",latestStatus:"Locked",runId:"run"}));expect(result.conflict).toEqual({attemptedVersion:1,latestVersion:2,attemptedRevisionId:"r1",latestRevisionId:"r2",attemptedRevisionVersion:1,latestRevisionVersion:2,attemptedStatus:"Reviewed",latestStatus:"Locked",recovery:{runId:"run",preserveInput:true}});});
+it.each([500,502,503] as const)("does not leak server message for %s",status=>{const result=mapPayrollBillingMutationError(new AppError(status,"SERVER","raw stack sql",{},true,"corr"));expect(result.safeMessage).not.toContain("raw");expect(result).toMatchObject({retryable:true,correlationId:"corr"});});
+it("maps cancellation without false error or retry",()=>{expect(mapPayrollBillingMutationError(new DOMException("cancelled","AbortError"))).toEqual(expect.objectContaining({cancelled:true,retryable:false,globalErrors:[],safeCode:"REQUEST_CANCELLED"}));});
+});

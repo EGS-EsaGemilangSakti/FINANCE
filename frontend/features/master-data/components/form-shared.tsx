@@ -1,0 +1,13 @@
+"use client";
+import { Button,Card,CardHeader,DataState,Modal } from "@/components/ui";
+import type { ConflictMetadata } from "../domain/mutation-error";
+import { useUnsavedGuard } from "./use-unsaved-guard";
+
+export function focusErrorSummary(){requestAnimationFrame(()=>document.getElementById("master-form-errors")?.focus());}
+export function focusFirstInvalidField(){document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();}
+export function Section({title,children}:{title:string;children:React.ReactNode}){return <Card><CardHeader title={title}/><div className="form-section">{children}</div></Card>}
+export function Actions({pending,back}:{pending:boolean;back:()=>void}){return <div className="form-actions"><Button variant="secondary" onClick={back}>Kembali</Button><Button type="submit" disabled={pending}>Tinjau dan simpan</Button></div>}
+export function Review({open,close,save,pending}:{open:boolean;close:()=>void;save:()=>void;pending:boolean}){return <Modal open={open} onClose={close} title="Tinjau perubahan" footer={<><Button variant="secondary" onClick={close}>Kembali edit</Button><Button onClick={save} disabled={pending}>Simpan</Button></>}>Pastikan data dan alasan perubahan sudah benar.</Modal>}
+export function LeaveGuard({guard}:{guard:ReturnType<typeof useUnsavedGuard>}){return <Modal open={guard.open} onClose={guard.stay} title="Perubahan belum disimpan" description="Input akan hilang jika Anda meninggalkan halaman." footer={<><Button onClick={guard.stay}>Tetap di halaman</Button><Button variant="danger" onClick={guard.leave}>Keluar tanpa menyimpan</Button></>}>Perubahan belum dikirim ke server.</Modal>}
+export function ErrorSummary({count}:{count:number}){if(!count)return null;return <div id="master-form-errors" className="form-error-summary" tabIndex={-1} role="alert" aria-live="assertive"><strong>Periksa kembali form</strong><p>{count} field perlu diperbaiki.</p><Button variant="quiet" onClick={focusFirstInvalidField}>Ke field pertama yang bermasalah</Button></div>}
+export function ConflictState({metadata,correlationId,reload,back}:{metadata:ConflictMetadata;correlationId:string;reload:string;back:string}){const description=`Versi form Anda ${metadata.userVersion}; versi terbaru ${metadata.latestVersion}. ${metadata.diffs.map((item)=>`${item.label}: ${item.before} → ${item.after}`).join("; ")}`;return <DataState kind="conflict" title="Record telah berubah" description={description} correlationId={correlationId} action={<div className="page-actions"><a className="button button-secondary" href={reload}>Muat versi terbaru</a><a className="button button-quiet" href={back}>Kembali tanpa menyimpan</a></div>}/>}

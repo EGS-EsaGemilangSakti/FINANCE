@@ -1,0 +1,2 @@
+import type { Metadata } from "next";import { Suspense } from "react";import { AppShell } from "@/components/layout/app-shell";import { LoadingState } from "@/components/ui";import { ProjectDetailPage } from "@/features/projects/components/project-detail-page";
+export const metadata:Metadata={title:"Detail Project | ESA Finance"};export default async function ProjectPage(props:PageProps<"/projects/[projectId]">){const {projectId}=await props.params;return <AppShell><Suspense fallback={<LoadingState/>}><ProjectDetailPage projectId={projectId}/></Suspense></AppShell>;}
